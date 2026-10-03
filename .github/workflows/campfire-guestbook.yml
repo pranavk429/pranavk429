@@ -1,0 +1,86 @@
+name: Campfire Guestbook Automation
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  update-guestbook:
+    if: startsWith(github.event.issue.title, 'campfire-log') || contains(github.event.issue.labels.*.name, 'campfire-guestbook')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Extract issue message and update README
+        env:
+          ISSUE_USER: ${{ github.event.issue.user.login }}
+          ISSUE_AVATAR: ${{ github.event.issue.user.avatar_url }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          python3 -c "
+          import os, re
+
+          body = os.environ.get('ISSUE_BODY', '')
+          user = os.environ.get('ISSUE_USER', 'traveler')
+          avatar = os.environ.get('ISSUE_AVATAR', '')
+
+          # Try extracting from structured issue template
+          match = re.search(r'### Your Message\s+([\s\S]*?)(?:\n###|$)', body)
+          if match:
+              message = match.group(1).strip()
+          else:
+              # Fallback to entire body if not using template
+              message = body.strip() or 'Stopped by the campfire.'
+
+          from scripts.add_guestbook_entry import update_readme_content
+
+          with open('README.md', 'r', encoding='utf-8') as f:
+              content = f.read()
+
+          new_content = update_readme_content(content, user, message, avatar)
+
+          with open('README.md', 'w', encoding='utf-8') as f:
+              f.write(new_content)
+          "
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore(campfire): add guestbook entry from @${{ github.event.issue.user.login }}"
+            git push origin main
+          fi
+
+      - name: Close issue with warm greeting
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `Thanks for fueling the campfire, @${context.payload.issue.user.login}! 🔥🪵\nYour log has been permanently inscribed on the outpost profile: https://github.com/${context.repo.owner}`
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            });

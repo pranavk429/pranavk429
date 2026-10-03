@@ -1,0 +1,18 @@
+name: "🔥 Campfire Log (Guestbook)"
+description: "Leave a log or throw some dry wood onto the outpost campfire!"
+title: "campfire-log: [Your Name or Handle]"
+labels: ["campfire-guestbook"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🏕️ Welcome to the Outpost Campfire!
+        Submitting this issue will automatically run a GitHub Action that updates the profile README with your avatar and campfire log entry.
+  - type: input
+    id: message
+    attributes:
+      label: "Your Message"
+      description: "A short greeting or note to leave at the outpost (max 80 chars)."
+      placeholder: "Stopped by the fire to explore agent kernels! 🔥"
+    validations:
+      required: true
