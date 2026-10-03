@@ -1,7 +1,7 @@
 <div align="center">
 
   <!-- HERO BANNER -->
-  <img src="./assets/banner.jpg" alt="the campfire outpost" width="100%" style="border-radius: 8px; border: 1px solid #ff6b35;" />
+  <img src="https://raw.githubusercontent.com/pranavk429/pranavk429/main/assets/banner.jpg" alt="the campfire outpost" width="100%" style="border-radius: 8px; border: 1px solid #ff6b35;" />
 
   <br /><br />
 
